@@ -5,61 +5,112 @@ using UnityEngine;
 public class HighlightManager : MonoBehaviour
 {
 
-    // Blends between two materials
-    [SerializeField]
-    Material material1;
-    [SerializeField]
-    Material material2;
+    StoryManager storyManager;    
+    public List<GameObject> glowGameObjects = new List<GameObject>();        
 
-    GameObject glowGameObject;
-    
-    GameObject glowTarget;
+    public bool stopHighlight = true;
 
-    public float duration = 2.0f;
-    public float intensity = 0.0f;
-    MeshRenderer rend;
+    //could problem be here?
+    string chapTargetTag;
+    int currentChap;
 
-    Chapters currentChapter;
+    GameObject chapterGlowObject;
 
-   
-    //private bool goingUp;
-    //private float a = .05f;
-    //private Color matColor;
     void Start()
     {
-           
-        
+        storyManager = GameObject.FindWithTag("StoryManager").GetComponent<StoryManager>();
+        chapTargetTag = storyManager.simChapters[storyManager.currentChapterIndex].interactObjectTag;
+        currentChap = storyManager.currentChapterIndex;
+
+        foreach (GameObject go in storyManager.globalDictionaryObject.GetComponent<GlobalGameObjectDictionary>().assets)
+        {
+            if (go.GetComponent<Outline>()) 
+            {
+                glowGameObjects.Add(go);
+            }
+        }
+
+        foreach (GameObject glowObject in glowGameObjects)
+        {
+            if (glowObject.tag == chapTargetTag)
+            {
+                chapterGlowObject = glowObject;
+                Debug.Log("Chapter glow Object is " + chapterGlowObject.tag.ToString());
+            }
+        }
+
+        //chapterGlowObject = storyManager.gameObjectDictionary["Sludge_judge"];
+
     }
 
     void Update()
     {
-        /*
-        matColor.a = goingUp ? .03f + matColor.a : matColor.a - .03f;
+        chapTargetTag = storyManager.simChapters[storyManager.currentChapterIndex].interactObjectTag;
 
-        if (material1.color.a >= 1f)
-            goingUp = false;
-        else if (material1.color.a <= 00)
-            goingUp = true;
-        */
-
-        // ping-pong between the materials over the duration
-
-
-
-    }
-
-    public void StartHighlightCoroutine(GameObject glowGameObject) 
-    {
-        StartCoroutine(StartHighlightCycle(glowGameObject));
-    }
-
-    public IEnumerator StartHighlightCycle(GameObject glowGameObject)
-    {
-        while (true) 
+        //Debug.Log("Value of stopHighlight is " + stopHighlight);
+        foreach (GameObject glowObject in glowGameObjects)
         {
-            float lerp = Mathf.PingPong(Time.time, duration) / duration;
-            glowGameObject.GetComponent<MeshRenderer>().material.Lerp(material1, material2, lerp);
+            if (glowObject.tag == chapTargetTag)
+            {
+                chapterGlowObject = glowObject;
+                Debug.Log("Chapter glow Object is " + chapterGlowObject.tag.ToString());
+            }
+        }
+    }
+
+    public void StartHighlightCoroutine() 
+    {
+                
+        StartCoroutine(StartHighlightCycle());        
+        
+    }
+
+
+    public IEnumerator StartHighlightCycle()
+    {
+        //float lerpTime = 2f;
+        //Debug.Log("Inside StartHighlightCycle Coroutine");
+ 
+        while (true)
+        {
+
+            //Debug.Log("chapterGlowObject.tag is " + chapterGlowObject.tag);
+            if (chapterGlowObject.GetComponent<Outline>().enabled && !stopHighlight)
+            {
+                //Debug.Log("Inside enable to disable outline, !stopHighlight");
+                yield return new WaitForSeconds(.5f);
+                chapterGlowObject.GetComponent<Outline>().enabled = false;
+            } 
+            else if (chapterGlowObject.GetComponent<Outline>().enabled == false && !stopHighlight)
+            {
+                //Debug.Log("Inside disable to enable outline, !stopHighlight");
+                yield return new WaitForSeconds(.5f);
+                chapterGlowObject.GetComponent<Outline>().enabled = true;
+            }
+            
+            if (chapterGlowObject.GetComponent<Outline>().enabled && stopHighlight)
+            {
+                //Debug.Log("Inside enable to disable outline, stopHighlight");
+                yield return new WaitForSeconds(.5f);
+                chapterGlowObject.GetComponent<Outline>().enabled = false;
+            }
+            else if (chapterGlowObject.GetComponent<Outline>().enabled == false && stopHighlight)
+            {
+                //Debug.Log("Inside disable to enable outline,  stopHighlight");
+                yield return new WaitForSeconds(.5f);
+                chapterGlowObject.GetComponent<Outline>().enabled = false;
+            }
+            //interactionManager.target == currentChapter.interactObjectTag
             yield return null;
+                               
+            
+            if (currentChap >= storyManager.simChapters.Count - 1)
+            {
+                Debug.Log("Breaking out of highlight loop");
+                break;
+            }
+            yield return null;
+            
         }
     }
 

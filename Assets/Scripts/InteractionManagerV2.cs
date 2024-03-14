@@ -38,11 +38,16 @@ public class InteractionManagerV2 : MonoBehaviour
     }
     private void Update()
     {
+
+        DisableRaycastingCheck();
+      
         if (Input.GetMouseButtonDown(0))
         {
             target = GetMouseTarget(mouseColliderLayerMask);
         }
         
+
+
     }
 
     //function used to get the mouse target and if the target is the in the interactable layer mask to activate the MouseFollowPosition
@@ -62,10 +67,40 @@ public class InteractionManagerV2 : MonoBehaviour
         }
         else
         {
-            Debug.Log("Target is not interactable. Incorrect Target");
+            if (Physics.Raycast(ray, out RaycastHit hitInfo))
+            {
+                Debug.Log("Target is not interactable. Incorrect Target. Hit "+ hitInfo.transform.gameObject.name.ToString());
+            }
+
             return wrongTarget.tag;
         }
 
     }
 
+    public void DisableRaycastingCheck()
+    {
+        AudioSource audioSource = storyManager.gameObjectDictionary["AudioManager"].GetComponent<AudioSource>();
+        Animator SJAnim = storyManager.gameObjectDictionary["SJ_Water_animated"].GetComponent<Animator>();
+        GameObject blockRaycast = storyManager.gameObjectDictionary["BlockRaycast"];
+        HighlightManager highlightMan = storyManager.gameObjectDictionary["HighlightManager"].GetComponent<HighlightManager>();
+
+        //Debug.Log("Value of audioSource.isPlaying is " + audioSource.isPlaying.ToString());        
+
+        if (audioSource.isPlaying)
+        {
+            highlightMan.stopHighlight = true;
+            blockRaycast.SetActive(true);
+        }
+        else if ((SJAnim.GetCurrentAnimatorStateInfo(0).normalizedTime < 1) || SJAnim.IsInTransition(0)) 
+        {
+            highlightMan.stopHighlight = true;
+            blockRaycast.SetActive(true);
+        }
+        else 
+        {
+            highlightMan.stopHighlight = false;
+            blockRaycast.SetActive(false);
+        }                        
+
+    }
 }
